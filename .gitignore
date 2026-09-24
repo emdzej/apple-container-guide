@@ -1,0 +1,4 @@
+.DS_Store
+*.tar
+*.tar.gz
+/examples/**/node_modules/

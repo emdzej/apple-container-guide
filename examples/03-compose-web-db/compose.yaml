@@ -1,0 +1,71 @@
+# A deliberately small stack that still exercises the things that break when you
+# move a Compose file off Docker Desktop:
+#   - service-to-service DNS         (api -> db by name)
+#   - a published port               (web on the host)
+#   - a named volume                 (postgres data)
+#   - depends_on + healthcheck       (ordering that actually waits)
+#   - explicit memory                (VM reservations, not soft limits)
+#
+# Always set `name:`. Apple container has one global hostname namespace, so two
+# stacks that both have a `db` service fight over the short DNS alias - last one
+# started wins. With a project name you can also use the qualified form `db.acdemo`.
+name: acdemo
+
+services:
+  db:
+    image: docker.io/library/postgres:17-alpine
+    environment:
+      POSTGRES_PASSWORD: devonly
+      POSTGRES_DB: demo
+      # Keep PGDATA in a subdirectory: the volume root is ext4 and contains
+      # /lost+found, which initdb refuses to work with.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    # Each service is its own VM, so this is reserved per service, not shared
+    # across the stack. Budget accordingly.
+    mem_limit: 1g
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d demo"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  api:
+    image: docker.io/library/postgres:17-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    # Resolves `db` through the compose front end's service discovery. This is
+    # the line that fails if you use a front end without DNS support.
+    # Use the LIST form, not the string form. Docker Compose applies shell-style
+    # word splitting to `command: sh -c '...'`; container-compose 1.2.0 passes the
+    # whole string as a single argv element, which fails with "No such file or
+    # directory". The list form means the same thing to every front end.
+    command:
+      - sh
+      - -c
+      - |
+        until pg_isready -h db -U postgres -d demo; do sleep 1; done
+        psql "postgresql://postgres:devonly@db:5432/demo" -c "select now() as reached_db_by_name"
+        echo "api: discovery works"
+        sleep infinity
+    environment:
+      PGPASSWORD: devonly
+    mem_limit: 512m
+
+  web:
+    image: docker.io/library/nginx:alpine
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:8090:80"
+    mem_limit: 256m
+
+volumes:
+  pgdata:
+    driver: local
+    driver_opts:
+      # socktainer only: honour guest fsyncs for this volume instead of the
+      # default nosync. Other front ends ignore driver_opts.
+      sync: fsync
