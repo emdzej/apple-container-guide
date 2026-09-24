@@ -11,8 +11,6 @@ client/daemon version skew, service state, DNS configuration, socktainer health
 and socket staleness, which runtime `docker` is pointed at, whether `DOCKER_HOST`
 is overriding your context, competing runtimes, and disk usage.
 
----
-
 ## Multiple installs
 
 **The single most common broken state, and the symptoms never point at it.**
@@ -66,8 +64,6 @@ volume you have. Use `-k` unless you mean it.
 The uninstaller refuses to run while the services are up, so `container system
 stop` first.
 
----
-
 ## `docker` doesn't see my containers
 
 Nine times in ten it's the context.
@@ -87,8 +83,6 @@ Check in this order:
 4. **Stale socket.** The socket file exists but nothing answers, so every docker
    call hangs for 30 seconds and then fails cryptically. `rm -f
    ~/.socktainer/container.sock && ./scripts/socktainer-service.sh start`.
-
----
 
 ## `docker context use socktainer` → "context not found"
 
@@ -115,8 +109,6 @@ docker context create socktainer \
   --docker host=unix://$(brew --prefix)/var/run/socktainer/.socktainer/container.sock
 ```
 
----
-
 ## A container "started" then died, and the logs are empty
 
 Check the **boot log**. This is the diagnostic with no Docker equivalent — if the
@@ -140,8 +132,6 @@ cres                           # what each container VM actually reserved
 There is no "unlimited": Docker's `--memory 0` maps to the 1 GiB default, not
 host RAM. Always pass an explicit value if you need more.
 
----
-
 ## Everything is slow / my Mac is swapping
 
 Memory is **reserved per container**, not shared. Ten services with no limits
@@ -161,8 +151,6 @@ Docker Desktop isn't still resident holding its own VM:
 pgrep -fl 'Docker Desktop'
 ```
 
----
-
 ## `initdb: directory exists but is not empty`
 
 ext4 named volumes always contain `/lost+found`, and Postgres refuses a
@@ -175,8 +163,6 @@ non-empty data directory.
 Same class of problem with MySQL, MongoDB and Elasticsearch. See
 [07 — Storage](07-storage.md#the-lostfound-trap).
 
----
-
 ## `EHOSTUNREACH` / "no route to host" between containers
 
 `vmnet` state degrades after a lot of network churn (many networks created and
@@ -188,8 +174,6 @@ container system stop && container system start
 ```
 
 `cnetreset` does both.
-
----
 
 ## Containers can't resolve each other by name
 
@@ -216,8 +200,6 @@ ls /etc/resolver/                                      # step 2
 ./scripts/setup-dns.sh test                            # does both
 ```
 
----
-
 ## Compose service dies with "No such file or directory" naming your command
 
 String-form `command:` under `container-compose`. It passes the whole string as
@@ -229,8 +211,6 @@ command: ["sh", "-c", "until pg_isready -h db; do sleep 1; done; exec myapp"]
 
 Details in [04 — Compose](04-compose.md#the-command-string-form-trap).
 
----
-
 ## `container-compose down` didn't remove anything
 
 Correct — it **stops** containers. They stay in `stopped` state, and volumes and
@@ -241,8 +221,6 @@ removes containers but keeps volumes unless you pass `-v`.
 container-compose -f compose.yaml down
 container rm myproj-db myproj-api myproj-web
 ```
-
----
 
 ## `container k8s` → "Plugin 'container-k8s' not found"
 
@@ -258,8 +236,6 @@ container system status | grep installRoot
 ls "$(container system status | awk '$1=="paths.installRoot"{print $2}')libexec/container-plugins" 2>/dev/null
 ls "$(brew --prefix container)/libexec/container-plugins" 2>/dev/null
 ```
-
----
 
 ## Builds are slow or run out of memory
 
@@ -282,8 +258,6 @@ no other way):
 container builder stop && container builder delete
 ```
 
----
-
 ## Disk keeps growing
 
 Freed blocks inside a container's disk image are never returned to the host
@@ -303,8 +277,6 @@ container volume ls               # TYPE column says "anonymous"
 container volume prune
 ```
 
----
-
 ## `docker save` fails with `ContentStore missing blob data`
 
 The image was pulled from a registry. `container image pull` downloads only your
@@ -314,8 +286,6 @@ tarball.
 
 Workarounds: re-pull on the target instead of moving a tarball, or go through
 `skopeo copy docker-daemon:img:tag oci-archive:/tmp/img.tar`.
-
----
 
 ## Private registry pulls fail after a successful login
 
@@ -331,8 +301,6 @@ container registry list
 container registry login ghcr.io
 ```
 
----
-
 ## Testcontainers hangs on startup
 
 Ryuk. It's mandatory to disable it:
@@ -344,8 +312,6 @@ export TESTCONTAINERS_RYUK_DISABLED=true
 Then nothing reaps leftovers, so add a teardown. Full per-language setup, memory
 budgeting and the symptom table: [11 — Testcontainers](11-testcontainers.md).
 
----
-
 ## amd64 image won't run
 
 ```bash
@@ -356,8 +322,6 @@ container run --arch amd64 myimage
 Rosetta is correct but slower, and some JITs and AVX-using binaries still fail
 under it. Test rather than assume. `container system property list` shows
 `build.rosetta` for the builder.
-
----
 
 ## Collecting information for a bug report
 

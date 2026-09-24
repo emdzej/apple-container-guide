@@ -8,8 +8,6 @@ Everything here was verified against **container 1.4.1**, **socktainer 1.2.1**,
 Where a tool behaves differently from its README, the observed behaviour is
 what's written down.
 
----
-
 ## The 60-second version
 
 ```bash
@@ -29,8 +27,6 @@ achelp
 
 Docker Desktop stays installed and one command away (`./scripts/switch-runtime.sh desktop`)
 until you're confident. Remove it last, not first.
-
----
 
 ## What you're actually switching to
 
@@ -71,8 +67,6 @@ concentrated in a handful of Docker features that simply have no counterpart.
 
 You don't have to choose globally. Both can be installed at once; the active
 Docker context decides which one `docker` talks to.
-
----
 
 ## Contents
 
@@ -124,8 +118,6 @@ audit migrate clean smoke lint`.
 | [05-multiplatform](examples/05-multiplatform) | arm64 + amd64 in one image |
 | [06-testcontainers](examples/06-testcontainers) | config for Java/Node/Go/Python/.NET |
 | [07-k8s](examples/07-k8s) | local Kubernetes via `container k8s` |
-
----
 
 ## The three things that will confuse you first
 
