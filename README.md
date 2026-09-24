@@ -94,6 +94,7 @@ architecture, capabilities and licensing.
 | [10 Troubleshooting](docs/10-troubleshooting.md) | the failures you will actually hit |
 | [11 Testcontainers](docs/11-testcontainers.md) | per-language setup, the Ryuk requirement, memory budgeting, cleanup |
 | [12 Alternatives](docs/12-alternatives.md) | Podman, Colima, Rancher, OrbStack, Finch compared — architecture, capabilities, and commercial-use licensing |
+| [13 Container machines](docs/13-machines.md) | persistent Linux VMs with your home, your user and your cwd — a Lima/Colima replacement that's already installed |
 
 **Scripts** — all safe to re-run; the destructive one is dry-run by default.
 
@@ -134,6 +135,28 @@ audit migrate clean smoke lint`.
 | [05-multiplatform](examples/05-multiplatform) | arm64 + amd64 in one image |
 | [06-testcontainers](examples/06-testcontainers) | config for Java/Node/Go/Python/.NET |
 | [07-k8s](examples/07-k8s) | local Kubernetes via `container k8s` |
+| [08-machine](examples/08-machine) | container machines: host user, home mount, cwd pass-through, SSH agent, persistence |
+
+## Don't miss `container machine`
+
+The platform ships a second thing that has nothing to do with containers, and
+almost nobody mentions it: **persistent, general-purpose Linux VMs**.
+
+```bash
+container machine create ubuntu:24.04 --name dev --cpus 4 --memory 8G
+container machine run -n dev                    # a Linux shell, as you
+```
+
+Unlike a container, a machine boots the image's **init system** (so `systemctl`
+works), its filesystem **survives a stop**, and it runs as **your host user**
+with your Mac's home mounted at `/Users/<you>`, your working directory carried
+through, and your SSH agent already forwarded — no flags. It is a Lima / Colima
+/ Multipass replacement you have already installed, and it takes any OCI image
+as its base.
+
+[13 — Container machines](docs/13-machines.md) covers it, including the two
+gotchas that will bite a script: `create` returns ~4 s **before** the machine
+accepts commands, and `sh -c 'multi word string'` is silently word-split.
 
 ## The three things that will confuse you first
 

@@ -242,7 +242,53 @@ docker --context socktainer ps -aq --filter label=org.testcontainers=true \
 Also: raise startup timeouts (a kernel boots per container), and set container
 memory explicitly. Full detail: [docs/11-testcontainers.md](docs/11-testcontainers.md).
 
-## 11. When to stop and use a different runtime
+## 11. Consider a machine instead of a container
+
+If the task is "get a Linux shell", "run a Linux-only tool", "build this against
+source already on disk", or "run a real service with systemd", a **container
+machine** is the right primitive and a container is the wrong one.
+
+```bash
+container machine create ubuntu:24.04 --name dev --cpus 4 --memory 8G
+container machine run -n dev -- <command> <args...>
+container machine stop dev && container machine delete dev
+```
+
+A machine boots the image's init system, persists its filesystem across stops,
+runs as the **host user** (not root), mounts the host home at `/Users/<user>`,
+carries the host working directory through, and forwards `SSH_AUTH_SOCK`
+automatically. Memory defaults to **half of host RAM**, so set `--memory`.
+
+Three rules when scripting one:
+
+1. **Wait for readiness after `create`.** The command returns, and
+   `machine list` reports `running`, roughly 4 seconds before `machine run`
+   works. Until then it fails with
+   `Operation not supported by device`. Poll instead of sleeping blindly:
+   ```bash
+   until container machine run -n dev -- true >/dev/null 2>&1; do sleep 1; done
+   ```
+   The same window applies to the first command after a `stop`, since `run`
+   auto-boots.
+2. **Do not pass a multi-word string to `sh -c`.** It is word-split before it
+   reaches the guest and silently does nothing. Pass separate words, or pipe the
+   script in:
+   ```bash
+   container machine run -n dev -- make -C /Users/me/proj test   # fine
+   printf 'apk add git\ngit clone ...\n' | container machine run -n dev -i -- sh
+   ```
+3. **Never hardcode a machine's IP** — it changes across restarts. Read it:
+   `container machine inspect dev | jq -r '.[0].ipAddress'`.
+
+Note the two home paths: the host home is mounted at `/Users/<user>`, while the
+guest's own `$HOME` is `/home/<user>`. Both exist and they are different.
+
+Alpine gives busybox init. For `systemctl`, use a systemd-capable image such as
+`ubuntu:24.04`.
+
+Full detail: [docs/13-machines.md](docs/13-machines.md).
+
+## 12. When to stop and use a different runtime
 
 If the task genuinely requires `--privileged` with device access,
 `--network host`, `--pid host`, Docker-in-Docker, or a GPU, **say so and switch**
@@ -261,7 +307,7 @@ Report which runtime you used and why. Do not silently fall back, and do not
 spend turns trying to approximate a feature that does not exist.
 [docs/12-alternatives.md](docs/12-alternatives.md) has the comparison.
 
-## 12. Verify before reporting success
+## 13. Verify before reporting success
 
 ```bash
 container ls -a                       # is it actually running, or exited?
@@ -299,6 +345,12 @@ container image ls | pull | push | rm | prune
 container builder stop && container builder delete
 container builder start --cpus 8 --memory 32g
 
+# machines (persistent Linux VMs, not containers - see section 11)
+container machine create ubuntu:24.04 --name dev --cpus 4 --memory 8G
+until container machine run -n dev -- true >/dev/null 2>&1; do sleep 1; done
+container machine run -n dev -- <cmd> <args...>       # separate words, not 'sh -c "..."'
+container machine list | inspect | stop | delete
+
 # docker compatibility
 ./scripts/socktainer-service.sh start
 docker context use socktainer
@@ -319,3 +371,7 @@ container prune && container image prune && container network prune
 8. Expecting `container-compose down` to remove containers.
 9. Using anonymous volumes and expecting `--rm` to clean them up.
 10. Putting a database data directory on a bind mount.
+11. Running `container machine run` immediately after `create` without waiting
+    for readiness, then reporting the machine as broken.
+12. Reaching for a container when the task wanted a machine — a Linux shell, an
+    init system, or a persistent filesystem.

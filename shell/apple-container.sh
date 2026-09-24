@@ -189,6 +189,72 @@ cvrestore() {
 }
 
 # ---------------------------------------------------------------------------
+# Container machines - persistent general-purpose Linux VMs. Not containers:
+# your host user, your home mounted, your cwd carried through, filesystem
+# survives a stop. See docs/13-machines.md
+# ---------------------------------------------------------------------------
+: "${AC_MACHINE_IMAGE:=docker.io/library/alpine:3.22}"
+: "${AC_MACHINE_CPUS:=4}"
+: "${AC_MACHINE_MEMORY:=8G}"
+
+cmls() { container machine list "$@"; }
+
+# `machine create` returns, and `machine list` says "running", a few seconds
+# before `machine run` works - until then it errors with "Operation not
+# supported by device". Wait for it to actually accept a command.
+cmwait() {
+  local m="${1:?usage: cmwait <machine>}" i=0
+  while [ "$i" -lt 60 ]; do
+    container machine run -n "$m" -- true >/dev/null 2>&1 && return 0
+    sleep 1; i=$((i+1))
+  done
+  echo "cmwait: $m never became ready (try: cmboot $m)" >&2
+  return 1
+}
+
+# Create with defaults worth having. Memory otherwise defaults to HALF your RAM.
+cmnew() {
+  local name="${1:?usage: cmnew <name> [image] [cpus] [memory]}"
+  container machine create "${2:-$AC_MACHINE_IMAGE}" \
+    --name "$name" \
+    --cpus "${3:-$AC_MACHINE_CPUS}" \
+    --memory "${4:-$AC_MACHINE_MEMORY}" || return 1
+  cmwait "$name" && echo "machine '$name' ready"
+}
+
+# Interactive login shell. Boots the machine first if it is stopped.
+cminto() { container machine run -n "${1:?usage: cminto <machine>}"; }
+
+# Run a command. Pass it as separate words, NOT as a quoted shell string -
+# `machine run -- sh -c 'echo hi'` is word-split by the platform and silently
+# does nothing. Use cmsh for anything needing a shell.
+cmx() {
+  local m="${1:?usage: cmx <machine> <command> [args...]}"; shift
+  container machine run -n "$m" -- "$@"
+}
+
+# Run a shell script in a machine, read from stdin or a heredoc. This is the
+# reliable way to run multi-command shell in a machine.
+#   cmsh dev <<'EOF'
+#   apk add --no-cache git
+#   git clone git@github.com:me/repo   # the host SSH agent is already forwarded
+#   EOF
+cmsh() {
+  local m="${1:?usage: cmsh <machine>   (script on stdin)}"
+  container machine run -n "$m" -i -- sh
+}
+
+cmip() {
+  container machine inspect "${1:?usage: cmip <machine>}" | ac_jq -r '.[0].ipAddress // empty'
+}
+
+cmstop()  { container machine stop "${1:?usage: cmstop <machine>}"; }
+cmrm()    { container machine stop "${1:?usage: cmrm <machine>}" 2>/dev/null; container machine delete "$1"; }
+cmlog()   { container machine logs "${1:?usage: cmlog <machine>}" "${@:2}"; }
+cmboot()  { container machine logs --boot "${1:?usage: cmboot <machine>}"; }
+cmset()   { local m="${1:?usage: cmset <machine> key=value...}"; shift; container machine set -n "$m" "$@"; echo "applies on next boot: cmstop $m"; }
+
+# ---------------------------------------------------------------------------
 # Compose
 #
 # Three front ends can drive a compose file on this platform and they are not
@@ -319,7 +385,9 @@ if [ -n "${ZSH_VERSION:-}" ] && whence -w compdef >/dev/null 2>&1; then
   _ac_volumes()    { compadd -- $(container volume ls 2>/dev/null | awk 'NR>1{print $1}'); }
   _ac_images()     { compadd -- $(container image ls 2>/dev/null | awk 'NR>1 && $2!="<none>"{printf "%s:%s\n", $1, $2}'); }
   compdef _ac_containers cinto cx clog cboot cip cports cenv copen
+  _ac_machines()   { compadd -- $(container machine list -q 2>/dev/null); }
   compdef _ac_volumes    cvinto cvsize cvbackup cvrestore
+  compdef _ac_machines   cminto cmx cmsh cmip cmstop cmrm cmlog cmboot cmset cmwait
   compdef _ac_images     cshell cwork
 fi
 
@@ -377,6 +445,16 @@ volumes     cvinto <v>        shell into a volume
             cvsize <v>        du -sh
             cvbackup <v> [d]  tar.gz a volume onto your Mac
             cvrestore <v> <f> restore from one
+
+machines    cmls              list machines (persistent Linux VMs, not containers)
+            cmnew <n> [img]   create (4 cpus / 8G; default is HALF your RAM)
+            cminto <n>        interactive shell (boots it if stopped)
+            cmx <n> <cmd...>  run a command - separate words, not a quoted string
+            cmsh <n>          run a shell script from stdin/heredoc
+            cmip <n>          current IP (changes across restarts)
+            cmset <n> k=v     change cpus/memory/home-mount (needs a restart)
+            cmwait <n>        block until it accepts commands (create returns early)
+            cmstop / cmrm / cmlog / cmboot <n>
 
 compose     cup / cdown / cbuildc / cps    via $AC_COMPOSE
             cwhichcompose     what is installed, and what each needs

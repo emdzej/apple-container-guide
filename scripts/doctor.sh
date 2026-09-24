@@ -91,6 +91,20 @@ if have container; then
   fi
 fi
 
+head1 "Container machines"
+if have container && container system status >/dev/null 2>&1; then
+  MACHINES="$(container machine list -q 2>/dev/null | wc -l | tr -d ' ')"
+  if [[ "${MACHINES:-0}" == "0" ]]; then
+    note "none. These are persistent Linux VMs with your home mounted - see docs/13-machines.md"
+  else
+    ok "$MACHINES machine(s)"
+    container machine list 2>/dev/null | sed 's/^/       /'
+    # A running machine reserves half the host RAM by default.
+    container machine list --format json 2>/dev/null \
+      | { have jq && jq -r '.[] | select(.status=="running") | "       running: \(.id) holds \((.memory/1073741824)|floor)G and \(.cpus) cpus"' || true; }
+  fi
+fi
+
 head1 "Docker API compatibility (socktainer)"
 if have socktainer; then
   ok "socktainer installed: $(socktainer --version 2>&1 | head -1)"

@@ -77,6 +77,10 @@ clean-hard: ## reclaim disk including all unused images and the builder cache
 smoke: ## run the end-to-end smoke test
 	./examples/01-hello/run.sh
 
+.PHONY: machine-demo
+machine-demo: ## demo container machines (persistent Linux VMs), then clean up
+	./examples/08-machine/run.sh
+
 .PHONY: lint
 lint: ## syntax-check every script in this repo
 	@fail=0; \

@@ -78,24 +78,22 @@ an image, test a manifest, delete it".
 
 ## `container machine` — the one people miss
 
-Not a container tool. `container machine` gives you **persistent, general-purpose
-Linux VMs** with your home directory mounted and a stable `.machine` DNS name.
-It's a Lima/Colima/Multipass replacement that's already installed.
+Not a container tool. `container machine` gives you **persistent,
+general-purpose Linux VMs** with your home directory mounted, your own user, your
+working directory carried through and your SSH agent forwarded. It boots the
+image's init system, so `systemctl` works and the filesystem survives a stop.
+
+It is a Lima / Colima / Multipass / UTM replacement that is already installed,
+and it takes any OCI image as its base.
 
 ```bash
-container machine create alpine:3.22 --name dev
-container machine run -n dev                     # interactive shell
-container machine run -n dev -- cat /proc/cpuinfo
-container machine set -n dev cpus=4 memory=8G home-mount=ro
-container machine stop dev
-container machine delete dev
-container machine list
-container machine set-default dev
+container machine create ubuntu:24.04 --name dev --cpus 4 --memory 8G
+container machine run -n dev
+container machine stop dev && container machine delete dev
 ```
 
-Defaults are 4 CPUs / 16 GiB with `home-mount=rw`. Unlike a container, the
-filesystem survives stop/start. Good for cross-compiling, running Linux-only
-tooling, or anything where you want a machine rather than a process.
+Full treatment, including the readiness gap after `create` and the `sh -c`
+word-splitting quirk: **[13 — Container machines](13-machines.md)**.
 
 ## Fallback runtimes — keep one
 
@@ -148,3 +146,4 @@ And optionally, if the languages match: `ko` (Go), `trivy`/`grype` (scanning),
 
 - [10 — Troubleshooting](10-troubleshooting.md)
 - [12 — Alternatives](12-alternatives.md) — how Apple container compares to Podman, Colima, Rancher, OrbStack and Finch
+- [13 — Container machines](13-machines.md) — the Lima/Colima replacement already on your disk

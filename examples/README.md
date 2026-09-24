@@ -14,6 +14,7 @@ Run `../scripts/doctor.sh` first if anything misbehaves.
 | [05-multiplatform](05-multiplatform) | arm64 + amd64 in one image, Rosetta | `./05-multiplatform/build.sh` |
 | [06-testcontainers](06-testcontainers) | Java/Node/Go/Python/.NET config, and the Ryuk requirement ([full doc](../docs/11-testcontainers.md)) | `source ./06-testcontainers/env.sh` |
 | [07-k8s](07-k8s) | local Kubernetes via `container k8s`, loading a local image | `./07-k8s/run.sh` |
+| [08-machine](08-machine) | container machines: host user, home mount, cwd pass-through, SSH agent, persistence | `./08-machine/run.sh` |
 
 ## Suggested order
 
@@ -24,6 +25,8 @@ Run `../scripts/doctor.sh` first if anything misbehaves.
    differences in their output are the whole argument of
    [docs/04-compose.md](../docs/04-compose.md).
 4. **04-postgres-volume** — the storage trap you will otherwise hit at a bad moment.
+5. **08-machine** — the part of the platform that isn't containers at all, and
+   the one most people never find.
 
 ## Cleanup
 

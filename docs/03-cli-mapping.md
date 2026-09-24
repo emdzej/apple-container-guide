@@ -56,7 +56,7 @@ one-offs and for the things only it exposes (boot logs, machines, `system df`).
 | `docker buildx` | `container build --arch a --arch b` | multi-platform in one pass |
 | — | `container system logs` | the platform's own logs |
 | — | `container builder start/stop/status/delete` | the BuildKit builder VM |
-| — | `container machine *` | persistent general-purpose Linux VMs |
+| — | `container machine *` | **persistent general-purpose Linux VMs** — see [13](13-machines.md) |
 | — | `container k8s *` | local Kubernetes clusters (plugin; may not be in your install) |
 | — | `container system dns create` | host-side DNS resolution for container names |
 | — | `container system property list` | merged `config.toml` + defaults |
@@ -150,7 +150,7 @@ container logs --boot <name>     # guest kernel/init log — why a container "st
 container system df              # per-type disk usage with reclaimable amounts
 container system property list   # the merged config the daemon is really using
 container inspect <name> | jq '.[0].status.networks[0].ipv4Address'   # routable IP
-container machine create alpine:3.22 --name dev    # a persistent Linux VM with $HOME mounted
+container machine create alpine:3.22 --name dev    # a persistent Linux VM with $HOME mounted, running as you
 ```
 
 `container logs --boot` is the one to internalise. On Docker, a container that
@@ -161,3 +161,4 @@ normal logs are empty and the boot log has the answer.
 ## Next
 
 - [04 — Compose](04-compose.md)
+- [13 — Container machines](13-machines.md) — the `container machine` subcommand in full
