@@ -184,3 +184,6 @@ and volumes live — removing it is the destructive step.
 ## Next
 
 - [02 — Migrate](02-migrate.md): getting your images, volumes and stacks across.
+- [12 — Alternatives](12-alternatives.md): if you are still deciding between
+  Apple container, Podman, Colima, Rancher Desktop, OrbStack and Finch —
+  including which of them are free for commercial use.

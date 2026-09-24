@@ -9,6 +9,13 @@
 # front end (container-compose / docker compose via socktainer / davit compose)
 # handles each one.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  awk 'NR==1 && /^#!/ {next} /^#/ {sub(/^# ?/,""); print; next} {exit}' "$SELF"
+  exit 0
+fi
+
 # Resolve the argument against the CALLER's directory before we cd anywhere,
 # otherwise a relative path like examples/x/compose.yaml breaks.
 FILE="${1:-}"

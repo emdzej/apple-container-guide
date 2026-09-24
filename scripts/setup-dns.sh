@@ -9,6 +9,7 @@
 #   1. the container service has to append a domain to container hostnames  ([dns] in config.toml)
 #   2. macOS has to be told to resolve that domain via 127.0.0.1            (/etc/resolver/<domain>, needs sudo)
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -18,7 +19,7 @@ for arg in "$@"; do
   case "$arg" in
     --host-access) HOST_ACCESS=1 ;;
     --host-ip=*)   HOST_IP="${arg#*=}" ;;
-    -h|--help)     sed -n '2,12p' "$0"; exit 0 ;;
+    -h|--help)     usage "$SELF"; exit 0 ;;
     -*)            die "unknown flag: $arg" ;;
     *)             DOMAIN="$arg" ;;
   esac

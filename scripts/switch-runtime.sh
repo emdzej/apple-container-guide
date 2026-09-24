@@ -5,12 +5,14 @@
 #   ./scripts/switch-runtime.sh apple      # Apple container (starts socktainer)
 #   ./scripts/switch-runtime.sh desktop    # Docker Desktop
 #   ./scripts/switch-runtime.sh colima     # Colima
+#   ./scripts/switch-runtime.sh orbstack   # OrbStack
 #   ./scripts/switch-runtime.sh list       # every context
 #
 # This only moves the Docker *context*. Nothing is uninstalled, so you can
 # flip back and forth while you migrate. DOCKER_HOST, if set, wins over the
 # context - the script warns you when that is the case.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -27,6 +29,7 @@ show() {
     *socktainer*)             ok "runtime: Apple container (via socktainer)" ;;
     *.docker/run/docker.sock) ok "runtime: Docker Desktop" ;;
     *colima*)                 ok "runtime: Colima" ;;
+    *orbstack*)               ok "runtime: OrbStack" ;;
     *) warn "runtime: unrecognised" ;;
   esac
   [[ -n "${DOCKER_HOST:-}" ]] && warn "DOCKER_HOST=$DOCKER_HOST is set in this shell and overrides the context. unset it."
@@ -51,13 +54,31 @@ case "${1:-show}" in
     show
     ;;
   colima)
-    have colima || die "colima not installed"
+    have colima || die "colima not installed (brew install colima)"
     colima status >/dev/null 2>&1 || run "starting colima" colima start
     run "selecting the colima context" docker context use colima
     show
     ;;
+  orbstack|orb)
+    # OrbStack ships an `orb` CLI and registers its own docker context.
+    if have orb; then
+      orb status >/dev/null 2>&1 || run "starting OrbStack" orb start
+    elif [[ -d /Applications/OrbStack.app ]]; then
+      run "launching OrbStack" open -ga OrbStack
+      for _ in $(seq 1 30); do
+        docker context ls --format '{{.Name}}' 2>/dev/null | grep -qx orbstack && break
+        sleep 1
+      done
+    else
+      die "OrbStack not installed (brew install orbstack)"
+    fi
+    run "selecting the orbstack context" docker context use orbstack
+    show
+    warn "OrbStack's free tier is personal, non-commercial use only. Commercial use needs Pro."
+    note "See docs/12-alternatives.md#licensing-and-commercial-use"
+    ;;
   list) docker context ls ;;
   show) show ;;
-  -h|--help) sed -n '2,13p' "$0" ;;
-  *) die "unknown target: $1 (apple|desktop|colima|list|show)" ;;
+  -h|--help) usage "$SELF" ;;
+  *) die "unknown target: $1 (apple|desktop|colima|orbstack|list|show)" ;;
 esac

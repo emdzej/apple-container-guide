@@ -9,6 +9,7 @@
 # image. Deleting files inside a container does not shrink its image, so disk
 # use only ever goes up until you prune.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -18,7 +19,7 @@ for arg in "$@"; do
   case "$arg" in
     --aggressive|-a) AGGRESSIVE=1 ;;
     --df)            DF_ONLY=1 ;;
-    -h|--help)       sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help)       usage "$SELF"; exit 0 ;;
     *)               die "unknown flag: $arg" ;;
   esac
 done

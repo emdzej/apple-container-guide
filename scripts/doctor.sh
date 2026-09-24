@@ -2,9 +2,12 @@
 # doctor.sh - health check for an Apple container setup on macOS.
 # Read-only: it inspects and reports, it never changes anything.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then usage "$SELF"; exit 0; fi
 
 PROBLEMS=0
 bad()  { fail "$*"; PROBLEMS=$((PROBLEMS + 1)); }
@@ -113,6 +116,7 @@ if have docker; then
     *socktainer*) ok "docker is talking to Apple container" ;;
     *.docker/run/docker.sock) warn "docker is talking to Docker Desktop -> scripts/switch-runtime.sh apple" ;;
     *colima*)     warn "docker is talking to Colima -> scripts/switch-runtime.sh apple" ;;
+    *orbstack*)   warn "docker is talking to OrbStack -> scripts/switch-runtime.sh apple" ;;
     *)            warn "docker endpoint is not Apple container" ;;
   esac
   [[ -n "${DOCKER_HOST:-}" ]] && warn "DOCKER_HOST=$DOCKER_HOST is set and overrides the context you selected."
@@ -140,6 +144,7 @@ if have colima; then
   FOUND=1
 fi
 have podman                                && { warn "Podman is installed"; FOUND=1; }
+[[ -d /Applications/OrbStack.app ]]        && { warn "OrbStack is installed (free tier is personal, non-commercial only)"; FOUND=1; }
 if (( FOUND == 0 )); then
   ok "no competing runtimes found"
 else

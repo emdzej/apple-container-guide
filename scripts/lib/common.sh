@@ -18,6 +18,14 @@ head1() { printf '\n%s%s%s\n' "$C_BOLD" "$*" "$C_RESET"; }
 
 die() { fail "$*"; exit 1; }
 
+# Print the leading comment block of a script as its help text, so --help stays
+# correct when the header changes. Skips the shebang, stops at the first
+# non-comment line.
+usage() {
+  local f="${1:-$SELF}"
+  awk 'NR==1 && /^#!/ {next} /^#/ {sub(/^# ?/,""); print; next} {exit}' "$f"
+}
+
 have() { command -v "$1" >/dev/null 2>&1; }
 
 # confirm "question" -> returns 0 on yes. Honours ASSUME_YES=1.

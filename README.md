@@ -68,6 +68,14 @@ concentrated in a handful of Docker features that simply have no counterpart.
 You don't have to choose globally. Both can be installed at once; the active
 Docker context decides which one `docker` talks to.
 
+Apple container isn't the only alternative either. If the driver is Docker
+Desktop's licence — a paid subscription is required at companies with **≥250
+employees or ≥$10M annual revenue**, either threshold alone — then Colima,
+Podman, Rancher Desktop and Finch are all Apache-2.0 or MIT with no commercial
+restriction, and OrbStack is *not* (its free tier is personal, non-commercial
+only). [12 — Alternatives](docs/12-alternatives.md) compares all seven on
+architecture, capabilities and licensing.
+
 ## Contents
 
 **Guide**
@@ -85,6 +93,7 @@ Docker context decides which one `docker` talks to.
 | [09 Ecosystem](docs/09-ecosystem.md) | tools that work, tools that don't, tools worth adding |
 | [10 Troubleshooting](docs/10-troubleshooting.md) | the failures you will actually hit |
 | [11 Testcontainers](docs/11-testcontainers.md) | per-language setup, the Ryuk requirement, memory budgeting, cleanup |
+| [12 Alternatives](docs/12-alternatives.md) | Podman, Colima, Rancher, OrbStack, Finch compared — architecture, capabilities, and commercial-use licensing |
 
 **Scripts** — all safe to re-run; the destructive one is dry-run by default.
 
@@ -103,6 +112,13 @@ Docker context decides which one `docker` talks to.
 
 **Shell** — [`shell/apple-container.sh`](shell/apple-container.sh), aliases and
 helpers for zsh and bash. Nothing shadows a real command. `achelp` lists everything.
+
+**[`AGENTS.md`](AGENTS.md)** — operational rules for AI coding agents, so an
+agent doesn't reach for `docker run --privileged` and burn a turn on an error it
+could have avoided. Detection first, the command translation, the flags that are
+structurally impossible, the `--memory` rule, and when to stop and switch
+runtime. Copy it into a project root or merge it into an existing `AGENTS.md` /
+`CLAUDE.md`.
 
 **Makefile** — `make help` for the short list: `make install doctor up apple desktop
 audit migrate clean smoke lint`.
@@ -136,6 +152,26 @@ audit migrate clean smoke lint`.
    `dwhich` (or `./scripts/switch-runtime.sh`) tells you what it's pointed at.
    `DOCKER_HOST`, if set anywhere in your shell profile, silently overrides the
    context you selected.
+
+## Keep a fallback runtime
+
+Some things here are structurally impossible, not merely unimplemented:
+`--network host`, `--privileged` with device access, `--pid host`,
+Docker-in-Docker, GPU passthrough. There is no shared kernel for them to refer
+to, so no release will add them.
+
+Keep a second runtime installed and switch per project:
+
+```bash
+brew install colima
+./scripts/switch-runtime.sh colima     # or: orbstack, desktop, apple
+```
+
+Colima is the usual choice — MIT, no commercial restriction, closest to plain
+Docker semantics. OrbStack is faster and more polished but its free tier is
+personal, non-commercial use only. [12 — Alternatives](docs/12-alternatives.md)
+compares Podman, Colima, Rancher Desktop, OrbStack and Finch on architecture,
+capabilities and licensing.
 
 ## Sources
 

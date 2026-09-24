@@ -13,6 +13,7 @@
 #
 # The docker CLI itself is worth keeping - it is what talks to socktainer.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -23,7 +24,7 @@ for arg in "$@"; do
     --execute)  EXECUTE=1 ;;
     --keep-cli) KEEP_CLI=1 ;;
     --purge-cli) KEEP_CLI=0 ;;
-    -h|--help)  sed -n '2,15p' "$0"; exit 0 ;;
+    -h|--help)  usage "$SELF"; exit 0 ;;
     *)          die "unknown flag: $arg" ;;
   esac
 done

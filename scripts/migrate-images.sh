@@ -16,6 +16,7 @@
 # emits a Docker archive, which is why the tar path goes through socktainer's
 # Docker-compatible /images/load endpoint instead of the container CLI directly.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -26,12 +27,12 @@ for arg in "$@"; do
     --list)        MODE=list ;;
     --all)         MODE=all ;;
     --prefer-pull) PREFER_PULL=1 ;;
-    -h|--help)     sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help)     usage "$SELF"; exit 0 ;;
     -*)            die "unknown flag: $arg" ;;
     *)             REFS+=("$arg"); MODE="${MODE:-some}" ;;
   esac
 done
-[[ -n "$MODE" ]] || { sed -n '2,20p' "$0"; exit 1; }
+[[ -n "$MODE" ]] || { usage "$SELF"; exit 1; }
 
 have docker || die "docker CLI not installed"
 require_container_cli

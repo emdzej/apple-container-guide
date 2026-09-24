@@ -17,6 +17,7 @@
 # Stop the containers that use these volumes first. Copying a live database
 # directory gives you a torn copy.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -30,13 +31,13 @@ while (( $# )); do
     --rename)    RENAME="${2:?--rename needs a name}"; shift ;;
     --size)      SIZE="${2:?--size needs a value, e.g. 20g}"; shift ;;
     --keep-tar)  KEEP_TAR=1 ;;
-    -h|--help)   sed -n '2,20p' "$0"; exit 0 ;;
+    -h|--help)   usage "$SELF"; exit 0 ;;
     -*)          die "unknown flag: $1" ;;
     *)           VOLS+=("$1"); MODE="${MODE:-some}" ;;
   esac
   shift
 done
-[[ -n "$MODE" ]] || { sed -n '2,20p' "$0"; exit 1; }
+[[ -n "$MODE" ]] || { usage "$SELF"; exit 1; }
 [[ -n "$RENAME" && ${#VOLS[@]} -gt 1 ]] && die "--rename only makes sense with a single volume"
 
 have docker || die "docker CLI not installed"

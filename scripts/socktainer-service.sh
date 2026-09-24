@@ -22,6 +22,7 @@
 # looks, so `docker context use socktainer` fails with "context not found".
 # This script installs its own agent with HOME set to your real home instead.
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -116,7 +117,7 @@ case "${1:-status}" in
     ok "stopped"
     ;;
 
-  restart) "$0" stop; "$0" start ;;
+  restart) "$SELF" stop; "$SELF" start ;;
 
   fg)
     require_container_cli
@@ -151,6 +152,6 @@ case "${1:-status}" in
     ok "removed $PLIST"
     ;;
 
-  -h|--help) sed -n '2,25p' "$0" ;;
+  -h|--help) usage "$SELF" ;;
   *) die "unknown command: $1 (start|stop|restart|status|fg|logs|uninstall)" ;;
 esac

@@ -259,6 +259,7 @@ dwhich() {
     *socktainer*)             echo "runtime : Apple container" ;;
     *.docker/run/docker.sock) echo "runtime : Docker Desktop" ;;
     *colima*)                 echo "runtime : Colima" ;;
+    *orbstack*)               echo "runtime : OrbStack" ;;
     *)                        echo "runtime : unrecognised" ;;
   esac
 }
@@ -275,7 +276,19 @@ duse() {
     colima)
       colima status >/dev/null 2>&1 || colima start
       docker context use colima >/dev/null || return 1 ;;
-    *) echo "usage: duse apple|desktop|colima" >&2; return 2 ;;
+    orbstack|orb)
+      if command -v orb >/dev/null 2>&1; then
+        orb status >/dev/null 2>&1 || orb start
+      else
+        open -ga OrbStack 2>/dev/null
+        local i=0
+        while [ "$i" -lt 30 ]; do
+          docker context ls --format '{{.Name}}' 2>/dev/null | grep -qx orbstack && break
+          sleep 1; i=$((i+1))
+        done
+      fi
+      docker context use orbstack >/dev/null || return 1 ;;
+    *) echo "usage: duse apple|desktop|colima|orbstack" >&2; return 2 ;;
   esac
   dwhich
 }
@@ -369,7 +382,7 @@ compose     cup / cdown / cbuildc / cps    via $AC_COMPOSE
             cwhichcompose     what is installed, and what each needs
 
 docker      dwhich            what is 'docker' talking to right now
-            duse apple|desktop|colima     switch runtime
+            duse apple|desktop|colima|orbstack   switch runtime
             sockup / sockdown / sockstatus
 
 system      csysup / csysdown / csysst     container system start|stop|status

@@ -100,7 +100,10 @@ tooling, or anything where you want a machine rather than a process.
 ## Fallback runtimes — keep one
 
 You will hit something that needs `--privileged` with real device access,
-`--network host`, a GPU, or Docker-in-Docker. Keep an escape hatch installed:
+`--network host`, a GPU, or Docker-in-Docker. Keep an escape hatch installed.
+
+[12 — Alternatives](12-alternatives.md) compares these properly — architecture,
+capability matrix, and who owes money for commercial use. The short version:
 
 | Runtime | When it's the better answer |
 |---|---|
@@ -144,3 +147,4 @@ And optionally, if the languages match: `ko` (Go), `trivy`/`grype` (scanning),
 ## Next
 
 - [10 — Troubleshooting](10-troubleshooting.md)
+- [12 — Alternatives](12-alternatives.md) — how Apple container compares to Podman, Colima, Rancher, OrbStack and Finch

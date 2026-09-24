@@ -323,6 +323,21 @@ Rosetta is correct but slower, and some JITs and AVX-using binaries still fail
 under it. Test rather than assume. `container system property list` shows
 `build.rosetta` for the builder.
 
+## It needs a feature this platform does not have
+
+`--privileged` with device access, `--network host`, `--pid host`,
+Docker-in-Docker, GPU passthrough: these are structural, not unimplemented.
+There is no shared kernel for them to refer to, so no release will add them.
+
+Use a fallback runtime for that project rather than fighting it:
+
+```bash
+./scripts/switch-runtime.sh colima     # or desktop
+```
+
+[12 — Alternatives](12-alternatives.md) covers which runtime to keep alongside,
+and the licensing position of each.
+
 ## Collecting information for a bug report
 
 ```bash

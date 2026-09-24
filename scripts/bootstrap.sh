@@ -6,6 +6,7 @@
 #   ./scripts/bootstrap.sh --no-gui     # skip Davit
 #   DRY_RUN=1 ./scripts/bootstrap.sh    # print what it would do
 set -uo pipefail
+SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/$(basename "${BASH_SOURCE[0]}")"
 cd "$(dirname "${BASH_SOURCE[0]}")" || exit 1
 # shellcheck source=lib/common.sh
 source ./lib/common.sh
@@ -18,7 +19,7 @@ for arg in "$@"; do
     --no-socktainer)  WANT_SOCKTAINER=0 ;;
     --no-compose)     WANT_COMPOSE=0 ;;
     --no-completions) WANT_COMPLETIONS=0 ;;
-    -h|--help) sed -n '2,10p' "$0"; exit 0 ;;
+    -h|--help) usage "$SELF"; exit 0 ;;
     *) die "unknown flag: $arg" ;;
   esac
 done
